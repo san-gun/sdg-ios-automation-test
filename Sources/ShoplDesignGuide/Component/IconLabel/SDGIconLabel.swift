@@ -7,7 +7,11 @@
 
 import SwiftUI
 
+/// Combines a label with at least one leading or trailing icon.
+/// Use `lineLimit: nil` for full text or `lineLimit: 1` for tail truncation.
 public struct SDGIconLabel: View {
+  /// Design documentation version; independent of the package release version.
+  public static let version = "2.1.29"
 
   public enum Size: Equatable {
     case medium(isBold: Bool)
@@ -69,6 +73,7 @@ public struct SDGIconLabel: View {
     lineLimit: Int? = nil,
     fullSize: Bool = false
   ) {
+    assert(leftImage != nil || rightImage != nil, "SDGIconLabel requires at least one icon.")
     self.size = size
     self.spacing = spacing
     self.leftImage = leftImage
@@ -97,7 +102,7 @@ public struct SDGIconLabel: View {
   private var titleText: some View {
     Text(title)
       .typo(size.typoSize, titleColor)
-      .applyIf(self.fullSize) {
+      .applyIf(self.fullSize || ((leftImage == nil) != (rightImage == nil))) {
         $0.frame(maxWidth: .infinity, alignment: .leading)
       }
       .multilineTextAlignment(.leading)
@@ -112,6 +117,7 @@ public struct SDGIconLabel: View {
       .frame(width: 14, height: 14)
       .foregroundStyle(self.imageForegroundColor)
       .padding(.vertical, size.iconVerticalPadding)
+      .fixedSize()
   }
 }
 
