@@ -79,8 +79,8 @@ public struct SDGIconLabel: View {
     )
   }
 
-  /// 기존 fullSize 호출부의 너비 동작을 보존하는 호환 초기화 함수입니다.
-  @available(*, deprecated, message: "Use the initializer without fullSize; apply external layout at the call site.")
+  /// 양쪽 아이콘에서 내부 라벨의 가용 폭 확장이 필요한 기존 호출은 fullSize: true인 이 호환 초기화 함수를 유지해야 합니다. fullSize 없는 초기화 함수에 외부 frame(maxWidth:)만 적용하면 같은 동작을 보존할 수 없습니다.
+  @available(*, deprecated, message: "Use the initializer without fullSize unless both icons require the internal label to fill the available width; keep this compatibility initializer with fullSize: true in that case. An external frame(maxWidth:) alone does not preserve that behavior.")
   public init(
     size: Size,
     spacing: Spacing = .two,
