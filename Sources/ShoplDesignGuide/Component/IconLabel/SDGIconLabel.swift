@@ -7,9 +7,11 @@
 
 import SwiftUI
 
-/// Combines a label with a leading icon, a trailing icon, or both.
-/// Use a plain Text view when neither icon is needed.
+/// Combines a label with at least one leading or trailing icon.
+/// Use `lineLimit: nil` for full text or `lineLimit: 1` for tail truncation.
 public struct SDGIconLabel: View {
+  /// Design documentation version; independent of the package release version.
+  public static let version = "2.1.29"
 
   public enum Size: Equatable {
     case medium(isBold: Bool)
@@ -68,9 +70,47 @@ public struct SDGIconLabel: View {
     title: String,
     imageForegroundColor: Color,
     titleColor: SDG.Color,
-    lineLimit: Int? = nil,
-    fullSize: Bool = false
+    lineLimit: Int? = nil
   ) {
+    self.init(
+      size: size, spacing: spacing, leftImage: leftImage, rightImage: rightImage,
+      title: title, imageForegroundColor: imageForegroundColor, titleColor: titleColor,
+      lineLimit: lineLimit, legacyFullSize: false
+    )
+  }
+
+  /// 기존 fullSize 호출부의 너비 동작을 보존하는 호환 초기화 함수입니다.
+  @available(*, deprecated, message: "Use the initializer without fullSize; apply external layout at the call site.")
+  public init(
+    size: Size,
+    spacing: Spacing = .two,
+    leftImage: Image? = nil,
+    rightImage: Image? = nil,
+    title: String,
+    imageForegroundColor: Color,
+    titleColor: SDG.Color,
+    lineLimit: Int? = nil,
+    fullSize: Bool
+  ) {
+    self.init(
+      size: size, spacing: spacing, leftImage: leftImage, rightImage: rightImage,
+      title: title, imageForegroundColor: imageForegroundColor, titleColor: titleColor,
+      lineLimit: lineLimit, legacyFullSize: fullSize
+    )
+  }
+
+  private init(
+    size: Size,
+    spacing: Spacing,
+    leftImage: Image?,
+    rightImage: Image?,
+    title: String,
+    imageForegroundColor: Color,
+    titleColor: SDG.Color,
+    lineLimit: Int?,
+    legacyFullSize: Bool
+  ) {
+    assert(leftImage != nil || rightImage != nil, "SDGIconLabel requires at least one icon.")
     self.size = size
     self.spacing = spacing
     self.leftImage = leftImage
@@ -79,7 +119,7 @@ public struct SDGIconLabel: View {
     self.imageForegroundColor = imageForegroundColor
     self.titleColor = titleColor
     self.lineLimit = lineLimit
-    self.fullSize = fullSize
+    self.fullSize = legacyFullSize
   }
 
   public var body: some View {
@@ -99,7 +139,7 @@ public struct SDGIconLabel: View {
   private var titleText: some View {
     Text(title)
       .typo(size.typoSize, titleColor)
-      .applyIf(self.fullSize || (leftImage == nil) != (rightImage == nil)) {
+      .applyIf(self.fullSize || ((leftImage == nil) != (rightImage == nil))) {
         $0.frame(maxWidth: .infinity, alignment: .leading)
       }
       .multilineTextAlignment(.leading)
@@ -114,6 +154,7 @@ public struct SDGIconLabel: View {
       .frame(width: 20, height: 20)
       .foregroundStyle(self.imageForegroundColor)
       .padding(.vertical, size.iconVerticalPadding)
+      .fixedSize()
   }
 }
 
