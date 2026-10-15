@@ -70,8 +70,45 @@ public struct SDGIconLabel: View {
     title: String,
     imageForegroundColor: Color,
     titleColor: SDG.Color,
+    lineLimit: Int? = nil
+  ) {
+    self.init(
+      size: size, spacing: spacing, leftImage: leftImage, rightImage: rightImage,
+      title: title, imageForegroundColor: imageForegroundColor, titleColor: titleColor,
+      lineLimit: lineLimit, legacyFullSize: false
+    )
+  }
+
+  /// 기존 fullSize 호출부의 너비 동작을 보존하는 호환 초기화 함수입니다.
+  @available(*, deprecated, message: "Use the initializer without fullSize; apply external layout at the call site.")
+  public init(
+    size: Size,
+    spacing: Spacing = .two,
+    leftImage: Image? = nil,
+    rightImage: Image? = nil,
+    title: String,
+    imageForegroundColor: Color,
+    titleColor: SDG.Color,
     lineLimit: Int? = nil,
-    fullSize: Bool = false
+    fullSize: Bool
+  ) {
+    self.init(
+      size: size, spacing: spacing, leftImage: leftImage, rightImage: rightImage,
+      title: title, imageForegroundColor: imageForegroundColor, titleColor: titleColor,
+      lineLimit: lineLimit, legacyFullSize: fullSize
+    )
+  }
+
+  private init(
+    size: Size,
+    spacing: Spacing,
+    leftImage: Image?,
+    rightImage: Image?,
+    title: String,
+    imageForegroundColor: Color,
+    titleColor: SDG.Color,
+    lineLimit: Int?,
+    legacyFullSize: Bool
   ) {
     assert(leftImage != nil || rightImage != nil, "SDGIconLabel requires at least one icon.")
     self.size = size
@@ -82,7 +119,7 @@ public struct SDGIconLabel: View {
     self.imageForegroundColor = imageForegroundColor
     self.titleColor = titleColor
     self.lineLimit = lineLimit
-    self.fullSize = fullSize
+    self.fullSize = legacyFullSize
   }
 
   public var body: some View {
@@ -114,7 +151,7 @@ public struct SDGIconLabel: View {
   private func iconImage(_ image: Image) -> some View {
     image
       .resizable()
-      .frame(width: 14, height: 14)
+      .frame(width: 20, height: 20)
       .foregroundStyle(self.imageForegroundColor)
       .padding(.vertical, size.iconVerticalPadding)
       .fixedSize()

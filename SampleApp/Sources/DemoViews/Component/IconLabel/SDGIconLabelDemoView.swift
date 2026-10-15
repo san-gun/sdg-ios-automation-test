@@ -2,67 +2,68 @@ import SwiftUI
 import ShoplDesignGuide
 
 struct SDGIconLabelDemoView: View {
-  private let longLabel = "텍스트가 길어질 경우 가용 폭을 모두 사용한 뒤 자연스럽게 줄바꿈됩니다."
+  private let longLabel = "긴 라벨은 남은 가용 너비에 맞춰 전체 내용을 여러 줄로 보여주거나 한 줄 말줄임으로 표시합니다."
 
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
-      sizeExamples("Medium", normal: .medium(isBold: false), bold: .medium(isBold: true))
-      sizeExamples("Small", normal: .small(isBold: false), bold: .small(isBold: true))
-      sizeExamples("XSmall", normal: .xsmall(isBold: false), bold: .xsmall(isBold: true))
+      sizeSection("Medium", regular: .medium(isBold: false), semibold: .medium(isBold: true))
+      sizeSection("Small", regular: .small(isBold: false), semibold: .small(isBold: true))
+      sizeSection("XSmall", regular: .xsmall(isBold: false), semibold: .xsmall(isBold: true))
 
-      VStack(alignment: .leading, spacing: 16) {
-        Text(sdg: "긴 라벨 · 전체 노출 / 한 줄 말줄임")
-          .typo(.body3_SB, .neutral350)
+      section("Icon placement · Single icon fills available width") {
+        label(size: .small(isBold: false), title: "Left icon", left: true, right: false)
+        label(size: .small(isBold: false), title: "Right icon", left: false, right: true)
+        label(size: .small(isBold: false), title: "Both icons", left: true, right: true)
+      }
 
-        // A narrow proposal makes wrapping, icon retention and label expansion reviewable.
-        VStack(alignment: .leading, spacing: 16) {
-          label(size: .small(isBold: false), spacing: .two,
-                left: true, right: false, title: longLabel)
-          label(size: .small(isBold: false), spacing: .four,
-                left: false, right: true, title: longLabel, lineLimit: 1)
-          label(size: .small(isBold: true), spacing: .four,
-                left: true, right: true, title: longLabel)
-          label(size: .small(isBold: true), spacing: .two,
-                left: true, right: true, title: longLabel, lineLimit: 1)
-        }
-        .frame(width: 200, alignment: .leading)
+      section("Long label · Full text") {
+        longLabelExamples(lineLimit: nil)
+      }
+
+      section("Long label · One line") {
+        longLabelExamples(lineLimit: 1)
       }
     }
-    .padding(16)
-    .padding(.bottom, 24)
+    .padding(.horizontal, 16)
+    .padding(.top, 16)
+    .padding(.bottom, 40)
     .frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  private func sizeExamples(
+  private func sizeSection(
     _ title: String,
-    normal: SDGIconLabel.Size,
-    bold: SDGIconLabel.Size
+    regular: SDGIconLabel.Size,
+    semibold: SDGIconLabel.Size
   ) -> some View {
+    section(title) {
+      weightExamples("Regular", size: regular)
+      weightExamples("SemiBold", size: semibold)
+    }
+  }
+
+  private func weightExamples(_ title: String, size: SDGIconLabel.Size) -> some View {
     VStack(alignment: .leading, spacing: 12) {
       Text(sdg: title)
-        .typo(.body3_SB, .neutral350)
+        .typo(.body3_R, .neutral400)
+      label(size: size, spacing: .two, title: "Label · Spacing2", left: true, right: true)
+      label(size: size, spacing: .four, title: "Label · Spacing4", left: true, right: true)
+    }
+  }
 
-      VStack(alignment: .leading, spacing: 16) {
-        label(size: normal, spacing: .two, left: true, right: true, title: "Label")
-        label(size: bold, spacing: .four, left: true, right: true, title: "Label")
-        label(size: normal, spacing: .four, left: true, right: false, title: "Label")
-        label(size: bold, spacing: .two, left: false, right: true, title: "Label")
-      }
-      .padding(16)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .overlay {
-        RoundedRectangle(cornerRadius: SDGCornerRadius.radius8.rawValue)
-          .stroke(Color.neutral200, lineWidth: 1)
-      }
+  private func longLabelExamples(lineLimit: Int?) -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+      label(size: .medium(isBold: false), title: longLabel, left: true, right: false, lineLimit: lineLimit)
+      label(size: .small(isBold: false), title: longLabel, left: false, right: true, lineLimit: lineLimit)
+      label(size: .xsmall(isBold: true), title: longLabel, left: true, right: true, lineLimit: lineLimit)
     }
   }
 
   private func label(
     size: SDGIconLabel.Size,
-    spacing: SDGIconLabel.Spacing,
+    spacing: SDGIconLabel.Spacing = .four,
+    title: String,
     left: Bool,
     right: Bool,
-    title: String,
     lineLimit: Int? = nil
   ) -> some View {
     SDGIconLabel(
@@ -71,13 +72,33 @@ struct SDGIconLabelDemoView: View {
       leftImage: left ? Image(sdg: .icCommonWarning) : nil,
       rightImage: right ? Image(sdg: .icView) : nil,
       title: title,
-      imageForegroundColor: .neutral700,
+      imageForegroundColor: .neutral400,
       titleColor: .neutral700,
       lineLimit: lineLimit
     )
   }
+
+  private func section<Content: View>(
+    _ title: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+      Text(sdg: title)
+        .typo(.body3_SB, .neutral350)
+      VStack(alignment: .leading, spacing: 20, content: content)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.neutral0)
+        .overlay {
+          RoundedRectangle(cornerRadius: SDGCornerRadius.radius8.rawValue)
+            .stroke(Color.neutral200, lineWidth: 1)
+        }
+    }
+  }
 }
 
 #Preview {
-  SDGIconLabelDemoView()
+  ScrollView {
+    SDGIconLabelDemoView()
+  }
 }
