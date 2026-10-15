@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+/// Combines a label with a leading icon, a trailing icon, or both.
+/// Use a plain Text view when neither icon is needed.
 public struct SDGIconLabel: View {
 
   public enum Size: Equatable {
@@ -97,7 +99,7 @@ public struct SDGIconLabel: View {
   private var titleText: some View {
     Text(title)
       .typo(size.typoSize, titleColor)
-      .applyIf(self.fullSize) {
+      .applyIf(self.fullSize || (leftImage == nil) != (rightImage == nil)) {
         $0.frame(maxWidth: .infinity, alignment: .leading)
       }
       .multilineTextAlignment(.leading)

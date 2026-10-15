@@ -353,7 +353,7 @@ enum SDGComponentCatalog: CaseIterable, SDGCatalogItemRepresentable {
 
   var viewID: String? {
     switch self {
-    case .avatar, .attachmentElement, .checkbox, .checkOption, .dropdown, .numberPicker, .radio, .toggle:
+    case .avatar, .attachmentElement, .checkbox, .checkOption, .dropdown, .iconLabel, .numberPicker, .radio, .toggle:
       return id
     default:
       return nil
