@@ -111,7 +111,7 @@ public struct SDGIconLabel: View {
   private func iconImage(_ image: Image) -> some View {
     image
       .resizable()
-      .frame(width: 18, height: 18)
+      .frame(width: 20, height: 20)
       .foregroundStyle(self.imageForegroundColor)
       .padding(.vertical, size.iconVerticalPadding)
   }
