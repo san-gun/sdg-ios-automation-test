@@ -1,0 +1,95 @@
+name: SDG iOS preview
+run-name: SDG iOS · ${{ inputs.source_branch }} · ${{ inputs.source_sha }} · ${{ inputs.build_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha: {required: true, type: string}
+      source_branch: {required: true, type: string}
+      source_base: {required: true, type: string}
+      design_name: {required: true, type: string}
+      build_id: {required: true, type: string}
+permissions:
+  contents: read
+concurrency:
+  group: ios-preview-${{ inputs.source_branch }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Validate input
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_BASE: ${{ inputs.source_base }}
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          [[ "$GITHUB_REPOSITORY" == 'san-gun/sdg-ios-automation-test' ]]
+          [[ "$GITHUB_REF" == 'refs/heads/automation/ios-preview' ]]
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$SOURCE_BASE" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$BUILD_ID" =~ ^[a-f0-9-]{36}$ ]]
+          [[ "$SOURCE_BRANCH" =~ ^(add|update|automation)/figma-[a-f0-9-]{36}$ ]]
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate source and protected paths
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_BASE: ${{ inputs.source_base }}
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$SOURCE_BRANCH" --jq .object.sha)" = "$SOURCE_SHA"
+          git merge-base --is-ancestor "$SOURCE_BASE" "$SOURCE_SHA"
+          git fetch origin automation/ios-preview
+          git diff --exit-code FETCH_HEAD HEAD -- .github Project.swift Tuist.swift Tuist Package.swift Package.resolved .tuist-version
+          python3 - <<'PY'
+          import os,re,subprocess
+          paths=subprocess.check_output(['git','diff','--name-only','--no-renames','-z',os.environ['SOURCE_BASE'],os.environ['SOURCE_SHA']]).decode().split('\0')
+          for p in filter(None,paths):
+              assert re.fullmatch(r'(Sources/ShoplDesignGuide|SampleApp/Sources)/[\w/]+\.swift',p),p
+              assert not p.startswith('Sources/ShoplDesignGuide/Generated/'),p
+          PY
+      - uses: jdx/mise-action@v2
+        with:
+          install: true
+          version: 2026.10.2
+          tool_versions: |
+            tuist 4.110.3
+      - name: Cache Swift dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            Tuist/.build
+            ~/.cache/tuist
+          key: sdg-ios-${{ runner.os }}-${{ runner.arch }}-tuist-4.110.3-${{ hashFiles('Tuist/Package.resolved', 'Tuist/Package.swift') }}
+      - name: Generate project
+        run: |
+          tuist install
+          tuist generate --no-open
+      - name: Build simulator app
+        run: |
+          set -o pipefail
+          xcodebuild -workspace ShoplDesignGuide.xcworkspace -scheme SDGSampleApp -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=NO build > build-output.log 2>&1 || { tail -100 build-output.log; exit 1; }
+          APP=$(find build/DerivedData/Build/Products/Debug-iphonesimulator -maxdepth 1 -name '*.app' -print -quit)
+          test -n "$APP"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" sdg-ios-simulator.zip
+      - name: Store simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdg-ios-${{ inputs.source_sha }}
+          path: sdg-ios-simulator.zip
+          if-no-files-found: error
+          retention-days: 3
+      - name: Store build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-log-${{ github.run_id }}
+          path: build-output.log
+          retention-days: 3
