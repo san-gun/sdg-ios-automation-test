@@ -46,8 +46,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$SOURCE_BRANCH" --jq .object.sha)" = "$SOURCE_SHA"
           git merge-base --is-ancestor "$SOURCE_BASE" "$SOURCE_SHA"
-          git fetch origin automation/ios-preview
-          git diff --exit-code FETCH_HEAD HEAD -- .github Project.swift Tuist.swift Tuist Package.swift Package.resolved .tuist-version
+          git diff --exit-code origin/automation/ios-preview HEAD -- .github Project.swift Tuist.swift Tuist Package.swift Package.resolved .tuist-version
           python3 - <<'PY'
           import os,re,subprocess
           paths=subprocess.check_output(['git','diff','--name-only','--no-renames','-z',os.environ['SOURCE_BASE'],os.environ['SOURCE_SHA']]).decode().split('\0')
